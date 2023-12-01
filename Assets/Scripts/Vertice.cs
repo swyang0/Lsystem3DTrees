@@ -3,8 +3,8 @@ using UnityEngine;
 
 public class Vertice
 {
-    Vector3 pos;
-    Vector3 dir;
+    public Vector3 pos;
+    public Vector3 dir;
 
 
     public Vertice() {
@@ -12,12 +12,27 @@ public class Vertice
         dir = new Vector3(0, 0, 0);
     } 
 
+    public Vertice(Vector3 pos, Vector3 dir)
+    {
+        this.pos = pos;
+        this.dir = dir;
+    }
+
     public void setVert(Vector3 inPos, Vector3 inDir)
     {
         pos = inPos;
         dir = inDir;
 
+    }
 
+    public void setPos(Vector3 inPos)
+    {
+        pos = inPos;
+    }
+
+    public void setDir(Vector3 inDir)
+    {
+        dir = inDir;
     }
 
     

@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TreeEditor;
+using Unity.VisualScripting;
 using Unity.VisualScripting.Antlr3.Runtime;
 using UnityEngine;
 
@@ -11,7 +13,7 @@ public class DrawTree : MonoBehaviour
     private Lsystem lsystem;
 
     [SerializeField]
-    [Range(-100, 100)]
+    [Range(0, 100)]
     private float angle;
 
 
@@ -32,11 +34,12 @@ public class DrawTree : MonoBehaviour
     [SerializeField]
     private char axiom;
 
-    
+    public GameObject objholder;
+    public GameObject lineholder;
+    public GameObject leafPrefab;
+
 
     private List<Vector3> existPos;
-
-    private List<Vector3> existLeaf;
 
     private LineRenderer lr;
 
@@ -54,10 +57,29 @@ public class DrawTree : MonoBehaviour
         lsystem = new Lsystem(rules, axiom);
         lr = GetComponent<LineRenderer>();
         existPos = new List<Vector3>();
-        existLeaf = new List<Vector3>();
         setWindOffset();
         growTree();
         
+    }
+
+    public void clearVerts()
+    {
+        //lr.positionCount = 0;
+        while (objholder.transform.childCount > 0)
+        {
+            DestroyImmediate(objholder.transform.GetChild(0).gameObject);
+        }
+        while (lineholder.transform.childCount > 0)
+        {
+            DestroyImmediate(lineholder.transform.GetChild(0).gameObject);
+        }
+        existPos.Clear();
+    }
+
+    public void dispose()
+    {
+        clearVerts();
+        lsystem.clear();
     }
 
     public void setWindOffset()
@@ -99,13 +121,15 @@ public class DrawTree : MonoBehaviour
         //print($"-----------{lsystem.iterations}---- ----");
         Stack<Vertice> stk = new Stack<Vertice>();
 
-        List<Vector3> vertices = new List<Vector3>();
+        //List<Vector3> vertices = new List<Vector3>();
+        List<Vertice> vertices = new List<Vertice>();
+        List<Vertice> leafPos = new List<Vertice>();
 
-        Vector3 curpos = new Vector3();
-        Vector3 curdir = new Vector3(0, 1, 0) ;
+        Vertice vert = new Vertice(new Vector3(), new Vector3(0, 1, 0));
+        
+        //vert.setVert(curpos, curdir);
 
-        Vertice vert = new Vertice();
-        vert.setVert(curpos, curdir);
+        float affect = 0;
 
         //print(str);
 
@@ -118,75 +142,85 @@ public class DrawTree : MonoBehaviour
             s += "\n";
             
             Matrix4x4 mat;
+            Vector3 newpos = new Vector3();
+
+
             switch (c)
             {
-                case 'F':
-                    /*
-                    vertices.Add(curpos);
-                    s += $"start{curpos},";
-                    curpos += curdir;
-                    //print("currentpos: " + curpos);
-                    vertices.Add(curpos);
-                    s += $"end{curpos}\n";
-                    //printVerts();
-                    */
-                    Vector3 newpos;
+                case 'F':      
                     if (lsystem.iterations == 1)
                     {
-                        newpos = curpos + curdir * scale;
+                        newpos = vert.pos + vert.dir * scale;
                     } else
                     {
-                        newpos = curpos + Vector3.Normalize(curdir + windOffset) * scale;
+                        newpos = vert.pos + Vector3.Normalize(vert.dir + windOffset * affect) * scale;
                     }
+                    
                     
                     if (existPos.Contains(newpos))
                     {
                         break;
                     }
-                    vertices.Add(curpos);
-                    vertices.Add(newpos);
-                    existPos.Add(curpos); 
-                    existPos.Add(newpos);
-                    curpos = newpos;
+                    Vector4 old = vert.pos;
+                    s += $"start{vert.pos}, newvert{newpos}";
+                    vertices.Add(vert.Clone());
+                    existPos.Add(vert.pos);
+
+                    vert.pos = newpos;
+
+                    vertices.Add(vert.Clone());
+                    existPos.Add(vert.pos);
+
+                    s += $"end{vert.pos}\n";
+
+                    if (affect <= 0.3)
+                    {
+                        affect += 0.01f;
+                    }
+
+                    print($"effect: {affect}");
+
+                    createBranch(old, newpos);
 
                     break;
-                case 'L':
 
+                case 'L':
+                    leafPos.Add(vert.Clone());
+                    break;
 
                 case '+': // clockwise rotate around x axis
                     mat = getRollMat(angle);
-                    curdir = Vector3.Normalize(mat * curdir) * scale;
-                    //Debug.Log("+ :" + curdir);
+                    vert.dir = Vector3.Normalize(mat * vert.dir) * scale;
+                    s += $"dir: {vert.dir}";
                     break;
 
                 case '-': // ccw rotate around x axis
                     mat = getRollMat(-angle);
-                    curdir = Vector3.Normalize(mat * curdir) * scale;
-                    //Debug.Log("- :" + curdir);
+                    vert.dir = Vector3.Normalize(mat * vert.dir) * scale;
+                    s += $"dir: {vert.dir}";
                     break;
 
-                case '\\': //clockwise rotate around y axis
+                case '$': //clockwise rotate around y axis
                     mat = getYawMat(angle);
-                    curdir = Vector3.Normalize(mat * curdir) * scale;
+                    vert.dir = Vector3.Normalize(mat * vert.dir) * scale;
                     break;
 
-                case '/': // ccw rotate around y axis
+                case '%': // ccw rotate around y axis
                     mat = getYawMat(-angle);
-                    curdir = Vector3.Normalize(mat * curdir) * scale;
+                    vert.dir = Vector3.Normalize(mat * vert.dir) * scale;
                     break;
 
-                case '{': //clockwise rotate around z axis
+                case '^': //clockwise rotate around z axis
                     mat = getPitchMat(angle);
-                    curdir = Vector3.Normalize(mat * curdir) * scale;
+                    vert.dir = Vector3.Normalize(mat * vert.dir) * scale;
                     break;
 
-                case '}': // ccw rotate around z axis
+                case '&': // ccw rotate around z axis
                     mat = getPitchMat(-angle);
-                    curdir = Vector3.Normalize(mat * curdir) * scale;
+                    vert.dir = Vector3.Normalize(mat * vert.dir) * scale;
                     break;
 
                 case '[':
-                    vert.setVert(curpos, curdir); 
                     stk.Push(vert.Clone());
                     s += $"push vert:{vert.getPos()}\n";
                     //printvert(vert);
@@ -194,53 +228,74 @@ public class DrawTree : MonoBehaviour
 
                  case ']':
                     vert = stk.Pop();
-                    curpos = vert.getPos(); 
-                    curdir = vert.getDir();
-                    s += $"pop vert:{curpos}\n";
+                    s += $"pop vert:{vert.getPos()}\n";
                     //printvert(vert);
                     break;
                 
 
             }
+            //print(s);
         }
 
+
         
-        printVerts(vertices);
-        drawTree(vertices);
+        //printVerts(vertices); 
+        drawLines(vertices);
+        drawLeaves(leafPos);
 
     }
 
-    public void printcurrentpos(Vector3 curpos, Vector3 curdir)
-    {
-        string strstr = "";
-        strstr += $"pos:{curpos}";
-        strstr += '\n';
-        strstr += $"dir:{curdir}";
-        print(strstr);
-    }
-
-    public void drawTree(List<Vector3> vertices) {
+    public void drawLines(List<Vertice> vertices) {
         for (int i = 0; i < vertices.Count; i+=2)
         {
-            drawLine(vertices[i], vertices[i + 1]);
+            Vector3 start = vertices[i].pos;
+            Vector3 end = vertices[i+1].pos;
+            //drawLine(vertices[i], vertices[i + 1]);        
+            GameObject line = new GameObject();
+            line.transform.parent = lineholder.transform;
+            LineRenderer temp = line.AddComponent<LineRenderer>();
+            Vector3[] arr = new[] {start, end};
+            temp.material = lr.sharedMaterial;
+            temp.startWidth = temp.endWidth = 0.05f;
+            temp.positionCount = 2;
+            temp.startColor = lr.startColor;
+            temp.endColor = lr.endColor;
+            //printVerts(vertices);
+            temp.SetPositions(arr);
         }
 
     } 
 
+    /*
     public void drawLine(Vector3 start, Vector3 end)
     {
-        GameObject obj = new GameObject();
-        obj.transform.parent = transform;
-        LineRenderer temp = obj.AddComponent<LineRenderer>();
-        Vector3[] arr = new[] {start, end};
-        temp.material = lr.sharedMaterial;
-        temp.startWidth = temp.endWidth = 0.05f;
-        temp.positionCount = 2;
-        temp.startColor = lr.startColor;
-        temp.endColor = lr.endColor;
-        //printVerts(vertices);
-        temp.SetPositions(arr);
+
+
+        
+
     }
+    */
+    public void createBranch(Vector3 start, Vector3 end)
+    {
+        GameObject obj = new GameObject();
+        obj.transform.parent = objholder.transform;
+        
+        BranchMesh cy = obj.AddComponent<BranchMesh>();
+        cy.create(6, start, end, 0.05f, 0.05f);
+        //obj.transform.LookAt(end);
+    }
+
+    public void drawLeaves(List<Vertice> leafPos)
+    {
+        foreach (var leaf in leafPos)
+        {
+            GameObject obj = Instantiate(leafPrefab);
+            obj.transform.parent = objholder.transform;
+            obj.transform.position = leaf.getPos();
+            obj.transform.rotation = Quaternion.Euler(leaf.getDir());
+        }
+    }
+
 
     public void printRule()
     {
@@ -274,22 +329,13 @@ public class DrawTree : MonoBehaviour
         print(str);
     }
 
-
-    public void clearVerts()
+    public void printcurrentpos(Vector3 curpos, Vector3 curdir)
     {
-        //lr.positionCount = 0;
-        while (transform.childCount > 0)
-        {
-            DestroyImmediate(transform.GetChild(0).gameObject);
-        }
-        existPos.Clear();
-        existLeaf.Clear();
-    }
-
-    public void dispose()
-    {
-        clearVerts();
-        lsystem.clear();
+        string strstr = "";
+        strstr += $"pos:{curpos}";
+        strstr += '\n';
+        strstr += $"dir:{curdir}";
+        print(strstr);
     }
 
     public Matrix4x4 getRollMat(float angle)
