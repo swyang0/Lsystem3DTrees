@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
 using UnityEngine;
+
 
 public class Lsystem
 {
@@ -16,17 +18,15 @@ public class Lsystem
     private string str = "";
 
     // map
-    private Dictionary<char, string> map;
-
-    // 
-
+    private Dictionary<char, List<Rule>> map;
+    
     public Lsystem(List<Rule> inRules, char inAxiom) {
         iterations = 0;
-        map = new Dictionary<char, string>();
+        map = new Dictionary<char, List<Rule>>();
         rules = inRules;
         str = inAxiom.ToString();
         generateRuleMap();
-        printMap();
+        setWeight();
     }
 
 
@@ -37,21 +37,34 @@ public class Lsystem
         for (int i = 0; i < str.Length; i++)
         {
             char c = str[i];
-
-            if (map.ContainsKey(c))
-            {
-                sb.Append(map[c]);
-            } else
+            // c is not a letter, add c and break
+            if (!map.ContainsKey(c))
             {
                 sb.Append(c);
+                continue;
+            }
+
+            // if c is a letter
+            // traverse the list to find the correct rule
+            int rand = randomGenerate();
+            Debug.Log($"rand num: {rand}");
+            double crl = 0.0;
+            for (int j = 0; j < map[c].Count; j++)
+            {
+                crl += map[c][j].weight;
+                if (crl >= rand)
+                {
+                    sb.Append(map[c][j].rule);
+                    Debug.Log($"RULE: {map[c][j].rule}\n");
+                    break;
+                }
             }
 
         }
 
         iterations++;
         str = sb.ToString();
-
-        //Debug.Log($"Iterations: {iterations}\nGenerate str: {str}");
+        Debug.Log($"Iterations: {iterations}\nGenerate str: {str}");
 
         return str;
     }
@@ -65,11 +78,19 @@ public class Lsystem
     {
         rules.ForEach(r =>
         {
-            if (!map.ContainsKey(r.variable))
+            char key = r.variable;
+
+
+            if (map.ContainsKey(key))
             {
-                map.Add(r.variable, r.rule);
+                map[key].Add(r.Clone());
+            } else
+            {
+                map.Add(key, new List<Rule> { r.Clone() });
             }
         });
+
+        printMap();
     }
 
     public void clear()
@@ -84,9 +105,43 @@ public class Lsystem
 
     private void printMap()
     {
+        string str = "";
         foreach (var element in map) 
         {
-            Debug.Log($"key : {element.Key}, value: {element.Value}");
+            str += $"key : {element.Key}\n ";
+            foreach (var rule in element.Value)
+            {
+                str += rule.ToString();
+                str += ";";
+            }
+        }
+    }
+
+    public int randomGenerate()
+    {
+        //var seed = System.DateTime.Now.Minute + System.DateTime.Now.Second;
+        var rand = Random.Range(0, 99);
+        return rand;
+
+    }
+
+    public void setWeight()
+    {
+        foreach(var variable in map)
+        {
+            double tot = 0;
+            // find the total weight
+            foreach(var rule in variable.Value)
+            {
+                tot += rule.weight;
+            }
+
+            // set the weight
+            foreach(var rule in variable.Value)
+            {
+                rule.weight = (int)(rule.weight/tot * 100);
+            }
+
         }
     }
 

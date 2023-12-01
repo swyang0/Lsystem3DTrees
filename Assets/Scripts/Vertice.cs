@@ -6,16 +6,17 @@ public class Vertice
     Vector3 pos;
     Vector3 dir;
 
+
     public Vertice() {
         pos = new Vector3(0, 0, 0);
-        dir = new Vector3(0, 0.3f, 0);
-
+        dir = new Vector3(0, 0, 0);
     } 
 
     public void setVert(Vector3 inPos, Vector3 inDir)
     {
         pos = inPos;
         dir = inDir;
+
 
     }
 

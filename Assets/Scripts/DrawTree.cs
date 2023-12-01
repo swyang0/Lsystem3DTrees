@@ -14,13 +14,33 @@ public class DrawTree : MonoBehaviour
     [Range(-100, 100)]
     private float angle;
 
+
+    [SerializeField]
+    [Range(0, 1)]
+    private float scale = 0.1f;
+
+    [SerializeField]
+    [Range(0, 1)]
+    private float windIntensity = 0;
+
+    [SerializeField]
+    WindDirection windDirection = new WindDirection();
+
     [SerializeField]
     private List<Rule> rules;
 
     [SerializeField]
     private char axiom;
 
+    
+
+    private List<Vector3> existPos;
+
+    private List<Vector3> existLeaf;
+
     private LineRenderer lr;
+
+    private Vector3 windOffset;
 
 
     private void Awake()
@@ -33,8 +53,37 @@ public class DrawTree : MonoBehaviour
         
         lsystem = new Lsystem(rules, axiom);
         lr = GetComponent<LineRenderer>();
+        existPos = new List<Vector3>();
+        existLeaf = new List<Vector3>();
+        setWindOffset();
         growTree();
         
+    }
+
+    public void setWindOffset()
+    {
+        switch (windDirection)
+        {
+            case WindDirection.NoWind:
+                windOffset = Vector3.zero; 
+                break;
+            case WindDirection.PositiveZ:
+                windOffset = Vector3.forward;
+                break;
+            case WindDirection.NegativeZ:
+                windOffset = Vector3.back;
+                break;
+            case WindDirection.PositiveX:
+                windOffset = Vector3.right;
+                break;
+            case WindDirection.NegativeX: 
+                windOffset = Vector3.left;
+                break;
+
+        }
+
+        windOffset = windOffset * windIntensity;
+        print($"offset: {windOffset}");
     }
 
     public void growTree()
@@ -47,79 +96,99 @@ public class DrawTree : MonoBehaviour
 
     public void addVerts(string str)
     {
-        print($"-----------{lsystem.iterations}---- ----");
+        //print($"-----------{lsystem.iterations}---- ----");
         Stack<Vertice> stk = new Stack<Vertice>();
 
         List<Vector3> vertices = new List<Vector3>();
+
+        Vector3 curpos = new Vector3();
+        Vector3 curdir = new Vector3(0, 1, 0) ;
+
         Vertice vert = new Vertice();
+        vert.setVert(curpos, curdir);
 
-        Vector3 curpos = vert.getPos();
-        Vector3 curdir = vert.getDir();
-
-
-        print(str);
+        //print(str);
 
         foreach (char c in str)
         {
 
-            /*
+            
             string s = "";
             s += c;
             s += "\n";
-            */
+            
             Matrix4x4 mat;
             switch (c)
             {
                 case 'F':
+                    /*
                     vertices.Add(curpos);
-                    //s += $"start{curpos},";
+                    s += $"start{curpos},";
                     curpos += curdir;
                     //print("currentpos: " + curpos);
                     vertices.Add(curpos);
-                    //s += $"end{curpos}\n";
+                    s += $"end{curpos}\n";
                     //printVerts();
+                    */
+                    Vector3 newpos;
+                    if (lsystem.iterations == 1)
+                    {
+                        newpos = curpos + curdir * scale;
+                    } else
+                    {
+                        newpos = curpos + Vector3.Normalize(curdir + windOffset) * scale;
+                    }
+                    
+                    if (existPos.Contains(newpos))
+                    {
+                        break;
+                    }
+                    vertices.Add(curpos);
+                    vertices.Add(newpos);
+                    existPos.Add(curpos); 
+                    existPos.Add(newpos);
+                    curpos = newpos;
+
                     break;
+                case 'L':
+
 
                 case '+': // clockwise rotate around x axis
                     mat = getRollMat(angle);
-                    curdir = Vector3.Normalize(mat * curdir);
+                    curdir = Vector3.Normalize(mat * curdir) * scale;
                     //Debug.Log("+ :" + curdir);
                     break;
 
                 case '-': // ccw rotate around x axis
                     mat = getRollMat(-angle);
-                    curdir = Vector3.Normalize(mat * curdir);
+                    curdir = Vector3.Normalize(mat * curdir) * scale;
                     //Debug.Log("- :" + curdir);
                     break;
 
                 case '\\': //clockwise rotate around y axis
                     mat = getYawMat(angle);
-                    curdir = Vector3.Normalize(mat * curdir);
-                    //Debug.Log("- :" + curdir);
+                    curdir = Vector3.Normalize(mat * curdir) * scale;
                     break;
 
                 case '/': // ccw rotate around y axis
                     mat = getYawMat(-angle);
-                    curdir = Vector3.Normalize(mat * curdir);
-                    //Debug.Log("- :" + curdir);
+                    curdir = Vector3.Normalize(mat * curdir) * scale;
                     break;
 
                 case '{': //clockwise rotate around z axis
                     mat = getPitchMat(angle);
-                    curdir = Vector3.Normalize(mat * curdir);
-                    //Debug.Log("- :" + curdir);
+                    curdir = Vector3.Normalize(mat * curdir) * scale;
                     break;
 
                 case '}': // ccw rotate around z axis
                     mat = getPitchMat(-angle);
-                    curdir = Vector3.Normalize(mat * curdir);
-                    //Debug.Log("- :" + curdir);
+                    curdir = Vector3.Normalize(mat * curdir) * scale;
                     break;
 
                 case '[':
-                    vert.setVert(curpos, curdir);
+                    vert.setVert(curpos, curdir); 
                     stk.Push(vert.Clone());
-                    //s += $"push vert:{vert.getPos()}\n";
+                    s += $"push vert:{vert.getPos()}\n";
                     //printvert(vert);
                     break;
 
@@ -127,17 +196,16 @@ public class DrawTree : MonoBehaviour
                     vert = stk.Pop();
                     curpos = vert.getPos(); 
                     curdir = vert.getDir();
-                    //s += $"pop vert:{curpos}\n";
+                    s += $"pop vert:{curpos}\n";
                     //printvert(vert);
                     break;
                 
 
             }
-
         }
 
-
-        //printVerts();
+        
+        printVerts(vertices);
         drawTree(vertices);
 
     }
@@ -209,12 +277,13 @@ public class DrawTree : MonoBehaviour
 
     public void clearVerts()
     {
-        //vertices.Clear();
         //lr.positionCount = 0;
         while (transform.childCount > 0)
         {
             DestroyImmediate(transform.GetChild(0).gameObject);
         }
+        existPos.Clear();
+        existLeaf.Clear();
     }
 
     public void dispose()
@@ -251,6 +320,30 @@ public class DrawTree : MonoBehaviour
                                             new Vector4(0, 0, 1, 0),
                                             new Vector4(0, 0, 0, 1));
         return mat;
+    }
+
+    private List<Rule> tree1()
+    {
+        return new List<Rule>()
+        {
+            new Rule('F', "F[+{\\F]F[/}-F]F", 0.6),
+            new Rule('F', "F[+F+F]F", 0.7),
+            new Rule('F', "F[-F]F", 0.5),
+        };
+    }
+
+    private List<Rule> tree2()
+    {
+        return new List<Rule>()
+        {
+            new Rule('F', "FF", 0.8),
+            new Rule('F', "F", 0.2),
+            new Rule('X', "F[+/A][}\\A][-\\A][{/A]", 0.5),
+            new Rule('X', "F[-\\A][{/A][+/A][}\\A]", 0.5),
+            new Rule('A', "F[-\\A][{+/A]", 0.3),
+            new Rule('A', "F[{\\A]F[{/A]", 0.3),
+            new Rule('A', "F[-{A]F[+}A]", 0.3)
+        };
     }
 
 }
