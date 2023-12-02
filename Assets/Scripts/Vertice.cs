@@ -6,10 +6,13 @@ public class Vertice
     public Vector3 pos;
     public Vector3 dir;
 
+    public float Size;
+
 
     public Vertice() {
         pos = new Vector3(0, 0, 0);
         dir = new Vector3(0, 0, 0);
+
     } 
 
     public Vertice(Vector3 pos, Vector3 dir)

@@ -39,6 +39,8 @@ public class DrawTree : MonoBehaviour
     [SerializeField]
     private char axiom;
 
+    public Material branchMaterial;
+
 
     public GameObject objholder;
     //private GameObject lineholder;
@@ -69,9 +71,8 @@ public class DrawTree : MonoBehaviour
 
         // set up tree holder
         treeholder = new GameObject("tree");
-        treeholder.AddComponent<MeshFilter>(); 
-        treeholder.AddComponent<MeshRenderer>().material = new Material(Shader.Find("Diffuse"));
-
+        treeholder.AddComponent<MeshFilter>();
+        treeholder.AddComponent<MeshRenderer>().material = branchMaterial;
 
         // set up object holder
         objholder = new GameObject("obj");
@@ -200,7 +201,7 @@ public class DrawTree : MonoBehaviour
 
                     print($"effect: {affect}");
 
-                    createBranch(old, newpos);
+                    createBranch(old, newpos, vert.dir);
 
                     break;
 
@@ -288,14 +289,16 @@ public class DrawTree : MonoBehaviour
 
     } 
     */
-    public void createBranch(Vector3 start, Vector3 end)
+    public void createBranch(Vector3 start, Vector3 end, Vector3 rotation)
     {
         GameObject obj = new GameObject();
         obj.transform.parent = objholder.transform;
+        //obj.transform.position = start;
+        //obj.transform.up = end - start;
 
         BranchMesh cy = new BranchMesh();
         //BranchMesh cy = new BranchMesh();
-        Mesh mesh = cy.create(branchShape, start, end, 0.1f, 0.1f);
+        Mesh mesh = cy.create(branchShape, start, end, 0.05f, 0.05f);
 
         obj.AddComponent<MeshFilter>().mesh = mesh;
         obj.AddComponent<MeshRenderer>();

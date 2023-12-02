@@ -74,6 +74,7 @@ public class BranchMesh
 
             // calculate end floor vertext coord
             v = calculateVertex(end, i * angle, endRadius);
+            //v = calculateVertex(start + new Vector3(start.x, start.y + 0.5f, start.z), i * angle, endRadius);
             vertices.Add(v);
         }
 
