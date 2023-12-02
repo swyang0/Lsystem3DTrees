@@ -5,8 +5,8 @@ using System.Linq;
 using UnityEngine;
 
 
-[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
-public class BranchMesh : MonoBehaviour
+//[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
+public class BranchMesh
 {
     // Start is called before the first frame update
     public int numfaces;
@@ -15,26 +15,28 @@ public class BranchMesh : MonoBehaviour
     public float startRadius;
     public float endRadius;
 
-    private Mesh mesh;
+    private Mesh mesh = new Mesh();
     private MeshRenderer rend;
     private Vector3[] meshVetices;
     private int[] triangles;
 
     private void Awake()
     {
-        mesh = GetComponent<MeshFilter>().mesh;
+        //mesh = GetComponent<MeshFilter>().mesh;
     }
 
-    public void create(int numfaces, Vector3 start, Vector3 end, float startRadius, float endRadius)
+    public Mesh create(int numfaces, Vector3 start, Vector3 end, float startRadius, float endRadius)
     {
         this.numfaces = numfaces;
         this.start = start;
         this.end = end;
         this.startRadius = startRadius;
         this.endRadius = endRadius;
-        mesh = GetComponent<MeshFilter>().mesh;
+        //mesh = GetComponent<MeshFilter>().mesh;
         //StartGenerate();
         GenerateCylinder();
+        return mesh;
+        
     }
 
 
@@ -91,11 +93,12 @@ public class BranchMesh : MonoBehaviour
         triangles = tri.ToArray();
     }
 
-    void generateMesh()
+       void generateMesh()
     {
         mesh.vertices = meshVetices;
         mesh.triangles = triangles;
-        mesh.RecalculateNormals();
+        //mesh.RecalculateNormals();
+        
         //GetComponent<MeshRenderer>().material = new Material(Shader.Find("Diffuse")); 
 
     }
@@ -131,6 +134,6 @@ public class BranchMesh : MonoBehaviour
             str += $"{tri}\n";
         }
 
-        print(str);
+        //print(str);
     }
 }

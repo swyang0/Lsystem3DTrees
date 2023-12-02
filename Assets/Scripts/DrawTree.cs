@@ -28,22 +28,31 @@ public class DrawTree : MonoBehaviour
     [SerializeField]
     WindDirection windDirection = new WindDirection();
 
+
+    [SerializeField]
+    [Range(3, 10)]
+    private int branchShape = 5;
+
     [SerializeField]
     private List<Rule> rules;
 
     [SerializeField]
     private char axiom;
 
+
     public GameObject objholder;
-    public GameObject lineholder;
+    //private GameObject lineholder;
+    public GameObject treeholder; 
     public GameObject leafPrefab;
 
 
     private List<Vector3> existPos;
 
-    private LineRenderer lr;
+    //private LineRenderer lr;
 
     private Vector3 windOffset;
+
+    private List<GameObject> treeParts = new List<GameObject>();
 
 
     private void Awake()
@@ -55,8 +64,18 @@ public class DrawTree : MonoBehaviour
         //printRule();
         
         lsystem = new Lsystem(rules, axiom);
-        lr = GetComponent<LineRenderer>();
+        //lr = GetComponent<LineRenderer>();
         existPos = new List<Vector3>();
+
+        // set up tree holder
+        treeholder = new GameObject("tree");
+        treeholder.AddComponent<MeshFilter>(); 
+        treeholder.AddComponent<MeshRenderer>().material = new Material(Shader.Find("Diffuse"));
+
+
+        // set up object holder
+        objholder = new GameObject("obj");
+
         setWindOffset();
         growTree();
         
@@ -65,21 +84,21 @@ public class DrawTree : MonoBehaviour
     public void clearVerts()
     {
         //lr.positionCount = 0;
-        while (objholder.transform.childCount > 0)
-        {
-            DestroyImmediate(objholder.transform.GetChild(0).gameObject);
-        }
-        while (lineholder.transform.childCount > 0)
-        {
-            DestroyImmediate(lineholder.transform.GetChild(0).gameObject);
-        }
+        clearHolders(objholder);
+        //clearHolders(lineholder);
+        clearHolders(treeholder);
+
         existPos.Clear();
+        treeParts.Clear();
     }
 
     public void dispose()
     {
         clearVerts();
         lsystem.clear();
+        DestroyImmediate(treeholder);
+        DestroyImmediate(objholder);
+        //treeholder.GetComponent<MeshFilter>().mesh = null;
     }
 
     public void setWindOffset()
@@ -161,11 +180,12 @@ public class DrawTree : MonoBehaviour
                     {
                         break;
                     }
-                    Vector4 old = vert.pos;
+                    
                     s += $"start{vert.pos}, newvert{newpos}";
                     vertices.Add(vert.Clone());
                     existPos.Add(vert.pos);
 
+                    Vector4 old = vert.pos;
                     vert.pos = newpos;
 
                     vertices.Add(vert.Clone());
@@ -238,13 +258,15 @@ public class DrawTree : MonoBehaviour
         }
 
 
-        
-        //printVerts(vertices); 
-        drawLines(vertices);
+
         drawLeaves(leafPos);
+        combineMeshes();
+
 
     }
 
+
+    /*
     public void drawLines(List<Vertice> vertices) {
         for (int i = 0; i < vertices.Count; i+=2)
         {
@@ -265,24 +287,44 @@ public class DrawTree : MonoBehaviour
         }
 
     } 
-
-    /*
-    public void drawLine(Vector3 start, Vector3 end)
-    {
-
-
-        
-
-    }
     */
     public void createBranch(Vector3 start, Vector3 end)
     {
         GameObject obj = new GameObject();
         obj.transform.parent = objholder.transform;
+
+        BranchMesh cy = new BranchMesh();
+        //BranchMesh cy = new BranchMesh();
+        Mesh mesh = cy.create(branchShape, start, end, 0.1f, 0.1f);
+
+        obj.AddComponent<MeshFilter>().mesh = mesh;
+        obj.AddComponent<MeshRenderer>();
+
+        treeParts.Add(obj);
         
-        BranchMesh cy = obj.AddComponent<BranchMesh>();
-        cy.create(6, start, end, 0.05f, 0.05f);
+
         //obj.transform.LookAt(end);
+    }
+
+    public void combineMeshes()
+    {
+        MeshFilter[] meshFilters = objholder.GetComponentsInChildren<MeshFilter>();
+        CombineInstance[] combine = new CombineInstance[meshFilters.Length];
+        
+        for (int i = 0; i < meshFilters.Length; i++)
+        {
+            combine[i].mesh = meshFilters[i].sharedMesh;
+            combine[i].transform = meshFilters[i].transform.localToWorldMatrix;
+            //meshFilters[i].gameObject.De
+        }
+
+        Mesh mesh = new Mesh();
+        mesh.CombineMeshes(combine);
+        treeholder.GetComponent<MeshFilter>().sharedMesh = mesh;
+        treeholder.SetActive(true);
+        mesh.RecalculateNormals();
+        clearHolders(objholder);
+
     }
 
     public void drawLeaves(List<Vertice> leafPos)
@@ -366,6 +408,14 @@ public class DrawTree : MonoBehaviour
                                             new Vector4(0, 0, 1, 0),
                                             new Vector4(0, 0, 0, 1));
         return mat;
+    }
+
+    public void clearHolders(GameObject obj)
+    {
+        while (obj.transform.childCount > 0)
+        {
+            DestroyImmediate(obj.transform.GetChild(0).gameObject);
+        }
     }
 
     private List<Rule> tree1()
