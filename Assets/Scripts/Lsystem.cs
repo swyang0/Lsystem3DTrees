@@ -27,6 +27,8 @@ public class Lsystem
         str = inAxiom.ToString();
         generateRuleMap();
         setWeight();
+        var seed = System.DateTime.Now.Second + System.DateTime.Now.Minute;
+        Random.InitState(seed);
     }
 
 
@@ -119,7 +121,6 @@ public class Lsystem
 
     public int randomGenerate()
     {
-        //var seed = System.DateTime.Now.Minute + System.DateTime.Now.Second;
         var rand = Random.Range(0, 99);
         return rand;
 

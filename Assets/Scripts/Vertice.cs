@@ -6,7 +6,7 @@ public class Vertice
     public Vector3 pos;
     public Vector3 dir;
 
-    public float Size;
+    public float size;
 
 
     public Vertice() {

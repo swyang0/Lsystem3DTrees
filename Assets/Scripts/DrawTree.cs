@@ -22,6 +22,14 @@ public class DrawTree : MonoBehaviour
     private float scale = 0.1f;
 
     [SerializeField]
+    [Range(0.001f, 1)]
+    private float maxWidth = 1;
+
+    [SerializeField]
+    [Range(2, 10)]
+    private float reductionFactor = 2;
+
+    [SerializeField]
     [Range(0, 1)]
     private float windIntensity = 0;
 
@@ -40,13 +48,15 @@ public class DrawTree : MonoBehaviour
     private char axiom;
 
     public Material branchMaterial;
+    public Material leafMaterial;
 
 
-    public GameObject objholder;
+    private GameObject objholder;
     //private GameObject lineholder;
-    public GameObject treeholder; 
+    private GameObject treeholder;
+    private GameObject leafholder;
     public GameObject leafPrefab;
-
+    
 
     private List<Vector3> existPos;
 
@@ -63,7 +73,7 @@ public class DrawTree : MonoBehaviour
 
     public void generate()
     {
-        //printRule();
+        //printRule()
         
         lsystem = new Lsystem(rules, axiom);
         //lr = GetComponent<LineRenderer>();
@@ -77,6 +87,9 @@ public class DrawTree : MonoBehaviour
         // set up object holder
         objholder = new GameObject("obj");
 
+        // set up leaf holder
+        leafholder = new GameObject("leaves");
+
         setWindOffset();
         growTree();
         
@@ -89,6 +102,8 @@ public class DrawTree : MonoBehaviour
         //clearHolders(lineholder);
         clearHolders(treeholder);
 
+        clearHolders(leafholder);
+
         existPos.Clear();
         treeParts.Clear();
     }
@@ -99,6 +114,7 @@ public class DrawTree : MonoBehaviour
         lsystem.clear();
         DestroyImmediate(treeholder);
         DestroyImmediate(objholder);
+        DestroyImmediate(leafholder);
         //treeholder.GetComponent<MeshFilter>().mesh = null;
     }
 
@@ -146,17 +162,20 @@ public class DrawTree : MonoBehaviour
         List<Vertice> leafPos = new List<Vertice>();
 
         Vertice vert = new Vertice(new Vector3(), new Vector3(0, 1, 0));
+        vert.size = maxWidth;
+
+        float currentSize = vert.size;
         
         //vert.setVert(curpos, curdir);
 
-        float affect = 0;
+        float affect = Mathf.Log(lsystem.iterations + 1) * 0.2f;
 
         //print(str);
 
-        foreach (char c in str)
+        for (int i = 0; i < str.Length; i++)
         {
 
-            
+            char c = str[i];
             string s = "";
             s += c;
             s += "\n";
@@ -183,25 +202,29 @@ public class DrawTree : MonoBehaviour
                     }
                     
                     s += $"start{vert.pos}, newvert{newpos}";
-                    vertices.Add(vert.Clone());
-                    existPos.Add(vert.pos);
+                    // record the old vertice
+                    Vertice old = vert.Clone();
+                    vertices.Add(old);
+                    existPos.Add(old.pos);
 
-                    Vector4 old = vert.pos;
+                    // update the new vertice
+                    float newSize = vert.size / Mathf.Log(reductionFactor);
+                    if (newSize <= 0.005f)
+                    {
+                        newSize = 0.005f;
+                    }
+                    vert.size = newSize;
                     vert.pos = newpos;
-
                     vertices.Add(vert.Clone());
                     existPos.Add(vert.pos);
 
                     s += $"end{vert.pos}\n";
 
-                    if (affect <= 0.3)
-                    {
-                        affect += 0.01f;
-                    }
+                    //affect += (0.005f) * 1/Mathf.Log(i + 2);
 
                     print($"effect: {affect}");
 
-                    createBranch(old, newpos, vert.dir);
+                    createBranch(old, vert);
 
                     break;
 
@@ -289,16 +312,20 @@ public class DrawTree : MonoBehaviour
 
     } 
     */
-    public void createBranch(Vector3 start, Vector3 end, Vector3 rotation)
+    public void createBranch(Vertice start, Vertice end)
     {
         GameObject obj = new GameObject();
         obj.transform.parent = objholder.transform;
+        //obj.transform.up = Vector3.Normalize(end.pos - start.pos);
+        //obj.transform.position = start.pos;
+        //obj.transform.
         //obj.transform.position = start;
         //obj.transform.up = end - start;
 
         BranchMesh cy = new BranchMesh();
         //BranchMesh cy = new BranchMesh();
-        Mesh mesh = cy.create(branchShape, start, end, 0.05f, 0.05f);
+        Mesh mesh = cy.create(branchShape, start.pos, end.pos, start.size, end.size);
+
 
         obj.AddComponent<MeshFilter>().mesh = mesh;
         obj.AddComponent<MeshRenderer>();
@@ -330,14 +357,25 @@ public class DrawTree : MonoBehaviour
 
     }
 
-    public void drawLeaves(List<Vertice> leafPos)
+    public void drawLeaves(List<Vertice> leaves)
     {
-        foreach (var leaf in leafPos)
+        foreach (var leaf in leaves)
         {
-            GameObject obj = Instantiate(leafPrefab);
-            obj.transform.parent = objholder.transform;
-            obj.transform.position = leaf.getPos();
-            obj.transform.rotation = Quaternion.Euler(leaf.getDir());
+            
+            //GameObject obj = Instantiate(leafPrefab);
+            GameObject obj = new GameObject();
+            obj.transform.parent = leafholder.transform;
+
+            MeshFilter ft = obj.AddComponent<MeshFilter>();
+
+            LeafMesh cy = new LeafMesh(leaf, 0.1f);
+            Mesh mesh = cy.createLeaf();
+            ft.mesh = mesh;
+
+            MeshRenderer rd = obj.AddComponent<MeshRenderer>();
+            rd.sharedMaterial = leafMaterial;
+            //obj.transform.position = leaf.getPos();
+            //obj.transform.up = le;
         }
     }
 

@@ -28,6 +28,8 @@ public class BranchMesh
     public Mesh create(int numfaces, Vector3 start, Vector3 end, float startRadius, float endRadius)
     {
         this.numfaces = numfaces;
+        //this.start = new Vector3(0, 0, 0);
+        //this.end = Vector3.Normalize(end - start);
         this.start = start;
         this.end = end;
         this.startRadius = startRadius;
