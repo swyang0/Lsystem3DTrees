@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 
 //[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
@@ -70,13 +71,15 @@ public class BranchMesh
         // calculate vertices
         for (int i = 0; i < numfaces; i++)
         {
+            //float len = Vector3.Magnitude(end - start);
             // caculate base floor vertext coord
             Vector3 v = calculateVertex(start, i * angle, startRadius);
+            //Vector3 v = calculateVertex(new Vector3(), i * angle, startRadius);
             vertices.Add(v);
 
             // calculate end floor vertext coord
             v = calculateVertex(end, i * angle, endRadius);
-            //v = calculateVertex(start + new Vector3(start.x, start.y + 0.5f, start.z), i * angle, endRadius);
+            //v = calculateVertex(start + new Vector3(start.x, end.y - start.y, start.z), i * angle, endRadius);
             vertices.Add(v);
         }
 
@@ -100,7 +103,7 @@ public class BranchMesh
     {
         mesh.vertices = meshVetices;
         mesh.triangles = triangles;
-        //mesh.RecalculateNormals();
+        mesh.RecalculateNormals();
         
         //GetComponent<MeshRenderer>().material = new Material(Shader.Find("Diffuse")); 
 

@@ -153,16 +153,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f92b4eeb4c0c3474cba9a4aef54a7907, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  angle: 35.7
-  scale: 0.229
-  maxWidth: 0.222
-  reductionFactor: 7.2
-  windIntensity: 0.313
+  angle: 25.2
+  scale: 0.172
+  maxWidth: 0.18
+  reductionFactor: 4.27
+  windIntensity: 0.409
   windDirection: 0
   branchShape: 10
   rules:
   - variable: 65
-    rule: F[+^A]%F[-$A]A
+    rule: F[+^FL]F[-&FL]F
     weight: 1
   - variable: 70
     rule: FF

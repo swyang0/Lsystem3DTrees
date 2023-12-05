@@ -230,6 +230,7 @@ public class DrawTree : MonoBehaviour
 
                 case 'L':
                     leafPos.Add(vert.Clone());
+                    s += $"leafpos: {vert.pos}";
                     break;
 
                 case '+': // clockwise rotate around x axis
@@ -278,7 +279,7 @@ public class DrawTree : MonoBehaviour
                 
 
             }
-            //print(s);
+            print(s);
         }
 
 
@@ -316,15 +317,16 @@ public class DrawTree : MonoBehaviour
     {
         GameObject obj = new GameObject();
         obj.transform.parent = objholder.transform;
+
+        BranchMesh cy = new BranchMesh();
+        //BranchMesh cy = new BranchMesh();
+        Mesh mesh = cy.create(branchShape, start.pos, end.pos, start.size, end.size);
+
         //obj.transform.up = Vector3.Normalize(end.pos - start.pos);
         //obj.transform.position = start.pos;
         //obj.transform.
         //obj.transform.position = start;
         //obj.transform.up = end - start;
-
-        BranchMesh cy = new BranchMesh();
-        //BranchMesh cy = new BranchMesh();
-        Mesh mesh = cy.create(branchShape, start.pos, end.pos, start.size, end.size);
 
 
         obj.AddComponent<MeshFilter>().mesh = mesh;
@@ -361,21 +363,40 @@ public class DrawTree : MonoBehaviour
     {
         foreach (var leaf in leaves)
         {
-            
+
             //GameObject obj = Instantiate(leafPrefab);
+            //obj.transform.parent = leafholder.transform;
+            //obj.transform.position = leaf.pos;
+            //obj.transform.localScale = 
+            /*
             GameObject obj = new GameObject();
             obj.transform.parent = leafholder.transform;
 
             MeshFilter ft = obj.AddComponent<MeshFilter>();
 
-            LeafMesh cy = new LeafMesh(leaf, 0.1f);
+            LeafMesh cy = new LeafMesh(leaf, 1f);
             Mesh mesh = cy.createLeaf();
             ft.mesh = mesh;
 
             MeshRenderer rd = obj.AddComponent<MeshRenderer>();
             rd.sharedMaterial = leafMaterial;
+            //obj.transform.rotation = Quaternion.Euler(leaf.dir);
             //obj.transform.position = leaf.getPos();
             //obj.transform.up = le;
+            */
+
+            GameObject obj = new GameObject();
+            obj.transform.parent = leafholder.transform;
+
+            BranchMesh cy = new BranchMesh();
+
+            Vector3 end = leaf.pos + leaf.dir * scale;
+            //BranchMesh cy = new BranchMesh();
+            Mesh mesh = cy.create(branchShape, leaf.pos, end, 0.05f, 0.01f);
+
+            obj.AddComponent<MeshFilter>().mesh = mesh;
+            obj.AddComponent<MeshRenderer>().sharedMaterial = leafMaterial;
+
         }
     }
 
