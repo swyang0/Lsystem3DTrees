@@ -16,36 +16,47 @@ public class DrawTree : MonoBehaviour
     [Range(0, 100)]
     private float angle;
 
-
     [SerializeField]
     [Range(0, 1)]
-    private float scale = 0.1f;
+    private float maxBranchLength = 0.1f;
 
     [SerializeField]
     [Range(0.001f, 1)]
-    private float maxWidth = 1;
+    private float maxBranchWidth = 1;
 
     [SerializeField]
     [Range(2, 10)]
-    private float reductionFactor = 2;
+    private float branchReduceRate = 2;
 
     [SerializeField]
     [Range(0, 1)]
     private float windIntensity = 0;
 
     [SerializeField]
-    WindDirection windDirection = new WindDirection();
+    WindDirection windDirection;
 
+    [SerializeField]
+    [Range(0, 0.3f)]
+    float maxLeafSize = 0.3f;
 
     [SerializeField]
     [Range(3, 10)]
-    private int branchShape = 5;
+    private int leafShape = 5;
 
     [SerializeField]
-    private List<Rule> rules;
+    Color leafColor = Color.green;
 
     [SerializeField]
     private char axiom;
+
+    [SerializeField]
+    private TreeStyle treeStyle;
+
+    [SerializeField]
+    public bool customRule = false;
+
+    [SerializeField]
+    private List<Rule> rules;
 
     public Material branchMaterial;
     public Material leafMaterial;
@@ -55,9 +66,7 @@ public class DrawTree : MonoBehaviour
     //private GameObject lineholder;
     private GameObject treeholder;
     private GameObject leafholder;
-    public GameObject leafPrefab;
     
-
     private List<Vector3> existPos;
 
     //private LineRenderer lr;
@@ -89,6 +98,22 @@ public class DrawTree : MonoBehaviour
 
         // set up leaf holder
         leafholder = new GameObject("leaves");
+
+        // set up leaf
+        leafMaterial.color = leafColor;
+
+        if (!customRule) {
+            switch (treeStyle) {
+                case TreeStyle.Tree1:
+                    treeStyle1();
+                    break;
+                case TreeStyle.Tree2:
+                    treeStyle2();
+                    break;
+            }
+
+        }
+        
 
         setWindOffset();
         growTree();
@@ -162,9 +187,10 @@ public class DrawTree : MonoBehaviour
         List<Vertice> leafPos = new List<Vertice>();
 
         Vertice vert = new Vertice(new Vector3(), new Vector3(0, 1, 0));
-        vert.size = maxWidth;
 
-        float currentSize = vert.size;
+        vert.size = maxBranchWidth * lsystem.iterations / 4;
+
+        float current_len = UnityEngine.Random.Range(maxBranchLength - 0.5f, maxBranchLength);
         
         //vert.setVert(curpos, curdir);
 
@@ -189,10 +215,10 @@ public class DrawTree : MonoBehaviour
                 case 'F':      
                     if (lsystem.iterations == 1)
                     {
-                        newpos = vert.pos + vert.dir * scale;
+                        newpos = vert.pos + vert.dir * maxBranchLength;
                     } else
                     {
-                        newpos = vert.pos + Vector3.Normalize(vert.dir + windOffset * affect) * scale;
+                        newpos = vert.pos + Vector3.Normalize(vert.dir + windOffset * affect) * maxBranchLength;
                     }
                     
                     
@@ -208,12 +234,13 @@ public class DrawTree : MonoBehaviour
                     existPos.Add(old.pos);
 
                     // update the new vertice
-                    float newSize = vert.size / Mathf.Log(reductionFactor);
+                    float newSize = vert.size / Mathf.Log(branchReduceRate + 1);
                     if (newSize <= 0.005f)
                     {
                         newSize = 0.005f;
                     }
                     vert.size = newSize;
+
                     vert.pos = newpos;
                     vertices.Add(vert.Clone());
                     existPos.Add(vert.pos);
@@ -235,34 +262,34 @@ public class DrawTree : MonoBehaviour
 
                 case '+': // clockwise rotate around x axis
                     mat = getRollMat(angle);
-                    vert.dir = Vector3.Normalize(mat * vert.dir) * scale;
+                    vert.dir = Vector3.Normalize(mat * vert.dir) * maxBranchLength;
                     s += $"dir: {vert.dir}";
                     break;
 
                 case '-': // ccw rotate around x axis
                     mat = getRollMat(-angle);
-                    vert.dir = Vector3.Normalize(mat * vert.dir) * scale;
+                    vert.dir = Vector3.Normalize(mat * vert.dir) * maxBranchLength;
                     s += $"dir: {vert.dir}";
                     break;
 
                 case '$': //clockwise rotate around y axis
                     mat = getYawMat(angle);
-                    vert.dir = Vector3.Normalize(mat * vert.dir) * scale;
+                    vert.dir = Vector3.Normalize(mat * vert.dir) * maxBranchLength;
                     break;
 
                 case '%': // ccw rotate around y axis
                     mat = getYawMat(-angle);
-                    vert.dir = Vector3.Normalize(mat * vert.dir) * scale;
+                    vert.dir = Vector3.Normalize(mat * vert.dir) * maxBranchLength;
                     break;
 
                 case '^': //clockwise rotate around z axis
                     mat = getPitchMat(angle);
-                    vert.dir = Vector3.Normalize(mat * vert.dir) * scale;
+                    vert.dir = Vector3.Normalize(mat * vert.dir) * maxBranchLength;
                     break;
 
                 case '&': // ccw rotate around z axis
                     mat = getPitchMat(-angle);
-                    vert.dir = Vector3.Normalize(mat * vert.dir) * scale;
+                    vert.dir = Vector3.Normalize(mat * vert.dir) * maxBranchLength;
                     break;
 
                 case '[':
@@ -280,6 +307,7 @@ public class DrawTree : MonoBehaviour
 
             }
             print(s);
+            
         }
 
 
@@ -320,7 +348,7 @@ public class DrawTree : MonoBehaviour
 
         BranchMesh cy = new BranchMesh();
         //BranchMesh cy = new BranchMesh();
-        Mesh mesh = cy.create(branchShape, start.pos, end.pos, start.size, end.size);
+        Mesh mesh = cy.create(10, start.pos, end.pos, start.size, end.size);
 
         //obj.transform.up = Vector3.Normalize(end.pos - start.pos);
         //obj.transform.position = start.pos;
@@ -384,15 +412,20 @@ public class DrawTree : MonoBehaviour
             //obj.transform.position = leaf.getPos();
             //obj.transform.up = le;
             */
+            float randSize = UnityEngine.Random.Range(0.01f, maxLeafSize);
+            float startSize = 0.01f;
+            float endSize = randSize;
+
 
             GameObject obj = new GameObject();
             obj.transform.parent = leafholder.transform;
 
             BranchMesh cy = new BranchMesh();
 
-            Vector3 end = leaf.pos + leaf.dir * scale;
+            Vector3 end = leaf.pos + leaf.dir * maxBranchLength;
+
             //BranchMesh cy = new BranchMesh();
-            Mesh mesh = cy.create(branchShape, leaf.pos, end, 0.05f, 0.01f);
+            Mesh mesh = cy.create(leafShape, leaf.pos, end, startSize, endSize);
 
             obj.AddComponent<MeshFilter>().mesh = mesh;
             obj.AddComponent<MeshRenderer>().sharedMaterial = leafMaterial;
@@ -480,27 +513,30 @@ public class DrawTree : MonoBehaviour
         }
     }
 
-    private List<Rule> tree1()
+
+    private void treeStyle1()
     {
-        return new List<Rule>()
+        axiom = 'A';
+        rules = new List<Rule>()
         {
-            new Rule('F', "F[+{\\F]F[/}-F]F", 0.6),
-            new Rule('F', "F[+F+F]F", 0.7),
-            new Rule('F', "F[-F]F", 0.5),
+            new Rule('A', "FF[+$$^^AL]+F[%&AL][$+&AL]", 0.5),
+            new Rule('A', "FF[-%%&&AL]-F[$^AL][%-^AL]", 0.5),
+            new Rule('L', "$^F[^^^L][^^L]", 0.3),
+            new Rule('L', "%&F[&$+L][%&+L]", 0.3),
+            new Rule('L', "+F[%L]-F[$%L]", 0.4)
         };
     }
 
-    private List<Rule> tree2()
+    private void treeStyle2()
     {
-        return new List<Rule>()
+        axiom = 'A';
+        rules = new List<Rule>()
         {
-            new Rule('F', "FF", 0.8),
-            new Rule('F', "F", 0.2),
-            new Rule('X', "F[+/A][}\\A][-\\A][{/A]", 0.5),
-            new Rule('X', "F[-\\A][{/A][+/A][}\\A]", 0.5),
-            new Rule('A', "F[-\\A][{+/A]", 0.3),
-            new Rule('A', "F[{\\A]F[{/A]", 0.3),
-            new Rule('A', "F[-{A]F[+}A]", 0.3)
+            new Rule('A', "FF[%&AL][$+&AL]F[-^AL][&$A]A", 0.5),
+            new Rule('A', "FF[$^AL][%-^AL][+&AL]", 0.5),
+            new Rule('L', "^+F[&L]F[$L]", 0.3),
+            new Rule('L', "&-F[^+L][%L]", 0.3),
+            new Rule('L', "-F[$L][%&L]", 0.4)
         };
     }
 

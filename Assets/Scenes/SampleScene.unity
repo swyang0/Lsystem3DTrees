@@ -153,24 +153,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f92b4eeb4c0c3474cba9a4aef54a7907, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  angle: 25.2
-  scale: 0.172
-  maxWidth: 0.18
-  reductionFactor: 4.27
-  windIntensity: 0.409
+  angle: 23.7
+  maxBranchLength: 0.242
+  maxBranchWidth: 0.264
+  branchReduceRate: 3.26
+  windIntensity: 0.514
   windDirection: 0
-  branchShape: 10
+  maxLeafSize: 0.158
+  leafShape: 10
+  leafColor: {r: 0.12776785, g: 0.6981132, b: 0.39327687, a: 1}
+  axiom: 65
+  treeStyle: 0
+  customRule: 1
   rules:
   - variable: 65
-    rule: F[+^FL]F[-&FL]F
-    weight: 1
-  - variable: 70
-    rule: FF
-    weight: 1
-  axiom: 65
+    rule: FF[%&AL][$+&AL]F[-^AL][&$A]A
+    weight: 0.5
+  - variable: 65
+    rule: FF[$^AL][%-^AL][+&AL]
+    weight: 0.5
+  - variable: 76
+    rule: ^+F[&L]F[$L]
+    weight: 0.3
+  - variable: 76
+    rule: '&-F[^+L][%L]'
+    weight: 0.3
+  - variable: 76
+    rule: -F[$L][%&L]
+    weight: 0.4
   branchMaterial: {fileID: 2100000, guid: 3c3391d496065cd44b5090ccf10492fb, type: 2}
   leafMaterial: {fileID: 2100000, guid: d5edb16c44ab90b4eae4c45c264b5cae, type: 2}
-  leafPrefab: {fileID: 4245504627128728145, guid: a72c53ce5822f964eb6ae0450f68213b, type: 3}
 --- !u!4 &444638142
 Transform:
   m_ObjectHideFlags: 0
