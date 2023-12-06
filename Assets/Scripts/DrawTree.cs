@@ -63,13 +63,11 @@ public class DrawTree : MonoBehaviour
 
 
     private GameObject objholder;
-    //private GameObject lineholder;
     private GameObject treeholder;
     private GameObject leafholder;
     
     private List<Vector3> existPos;
 
-    //private LineRenderer lr;
 
     private Vector3 windOffset;
 
@@ -321,45 +319,13 @@ public class DrawTree : MonoBehaviour
 
     }
 
-
-    /*
-    public void drawLines(List<Vertice> vertices) {
-        for (int i = 0; i < vertices.Count; i+=2)
-        {
-            Vector3 start = vertices[i].pos;
-            Vector3 end = vertices[i+1].pos;
-            //drawLine(vertices[i], vertices[i + 1]);        
-            GameObject line = new GameObject();
-            line.transform.parent = lineholder.transform;
-            LineRenderer temp = line.AddComponent<LineRenderer>();
-            Vector3[] arr = new[] {start, end};
-            temp.material = lr.sharedMaterial;
-            temp.startWidth = temp.endWidth = 0.05f;
-            temp.positionCount = 2;
-            temp.startColor = lr.startColor;
-            temp.endColor = lr.endColor;
-            //printVerts(vertices);
-            temp.SetPositions(arr);
-        }
-
-    } 
-    */
     public void createBranch(Vertice start, Vertice end)
     {
         GameObject obj = new GameObject();
         obj.transform.parent = objholder.transform;
 
         BranchMesh cy = new BranchMesh();
-        //BranchMesh cy = new BranchMesh();
         Mesh mesh = cy.create(10, start.pos, end.pos, start.size, end.size);
-
-        //obj.transform.up = Vector3.Normalize(end.pos - start.pos);
-        //obj.transform.position = start.pos;
-        //obj.transform.
-        //obj.transform.position = start;
-        //obj.transform.up = end - start;
-
-
         obj.AddComponent<MeshFilter>().mesh = mesh;
         obj.AddComponent<MeshRenderer>();
 
@@ -394,27 +360,6 @@ public class DrawTree : MonoBehaviour
     {
         foreach (var leaf in leaves)
         {
-
-            //GameObject obj = Instantiate(leafPrefab);
-            //obj.transform.parent = leafholder.transform;
-            //obj.transform.position = leaf.pos;
-            //obj.transform.localScale = 
-            /*
-            GameObject obj = new GameObject();
-            obj.transform.parent = leafholder.transform;
-
-            MeshFilter ft = obj.AddComponent<MeshFilter>();
-
-            LeafMesh cy = new LeafMesh(leaf, 1f);
-            Mesh mesh = cy.createLeaf();
-            ft.mesh = mesh;
-
-            MeshRenderer rd = obj.AddComponent<MeshRenderer>();
-            rd.sharedMaterial = leafMaterial;
-            //obj.transform.rotation = Quaternion.Euler(leaf.dir);
-            //obj.transform.position = leaf.getPos();
-            //obj.transform.up = le;
-            */
             float randSize = UnityEngine.Random.Range(0.01f, maxLeafSize);
             float startSize = 0.01f;
             float endSize = randSize;
