@@ -110,6 +110,9 @@ public class DrawTree : MonoBehaviour
                 case TreeStyle.Tree2:
                     treeStyle2();
                     break;
+                case TreeStyle.Tree3:
+                    treeStyle3();
+                    break;
             }
 
         }
@@ -537,6 +540,19 @@ public class DrawTree : MonoBehaviour
             new Rule('L', "^+F[&L]F[$L]", 0.3),
             new Rule('L', "&-F[^+L][%L]", 0.3),
             new Rule('L', "-F[$L][%&L]", 0.4)
+        };
+    }
+
+    private void treeStyle3()
+    {
+        axiom = 'A';
+        rules = new List<Rule>()
+        {
+            new Rule('A', "FF[+$AL]^F[-%AL]+A", 0.5),
+            new Rule('A', "FF[^$AL]&F[&%AL]-A", 0.5),
+            new Rule('L', "^+F[&L]^F[$L]", 0.3),
+            new Rule('L', "&-F[^+L][%L]", 0.3),
+            new Rule('L', "-F[$$L][%&L]", 0.4)
         };
     }
 

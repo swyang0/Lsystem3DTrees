@@ -5,5 +5,4 @@ enum WindDirection
     PositiveZ,
     NegativeX,
     NegativeZ,
-
 }
