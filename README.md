@@ -1,4 +1,4 @@
-<img src = "https://github.com/swyang0/Lsystem3DTrees/assets/70448679/0386573f-6ef2-432d-b3cd-eaadb7718660" width = 500>
+<img src = "https://github.com/swyang0/Lsystem3DTrees/assets/70448679/0386573f-6ef2-432d-b3cd-eaadb7718660" width = 350>
 
 # Procudural Modeling 3D Trees
 
